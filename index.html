@@ -48,10 +48,11 @@
 
     <div id="sum">Сума: 0 грн</div>
 
-    <button onclick="buy()">Купить</button>
+    <button onclick="payMonobank()">Оплатити через Monobank</button>
+    <button onclick="payWithPayPal()">Оплатити через PayPal</button>
   </div>
 
-  <p style="margin-top:30px;">💳 Після оплати, надішліть скріншот у Telegram: <b>@tviy_nik</b></p>
+  <p style="margin-top:30px;">💬 Після оплати надішліть скріншот у Telegram: <b>@User11f2</b></p>
 
   <script>
     const pricePerSubscriber = 2;
@@ -64,7 +65,21 @@
       document.getElementById("sum").innerText = `Сума: ${sum} грн`;
     }
 
-    function buy() {
+    function payMonobank() {
+      const count = parseInt(document.getElementById("count").value);
+      if (isNaN(count) || count < 100) {
+        alert("Мінімальне замовлення — 100 підписників");
+        return;
+      }
+
+      const total = count * pricePerSubscriber;
+      const monoLink = "https://send.monobank.ua/jar/9iLQmykm1J"; // ← твоя банка
+
+      alert(`Оплатіть ${total} грн через Monobank. Потім надішліть скрін у Telegram.`);
+      window.open(monoLink, "_blank");
+    }
+
+    function payWithPayPal() {
       const count = parseInt(document.getElementById("count").value);
       if (isNaN(count) || count < 100) {
         alert("Мінімальне замовлення — 100 підписників");
@@ -73,13 +88,10 @@
 
       const total = count * pricePerSubscriber;
 
-      // Посилання на банку Monobank:
-      const bankLink = "https://send.monobank.ua/jar/9iLQmykm1J";
+      const paypalLink = `https://www.paypal.me/YOUR_PAYPAL_USERNAME/${total}`; // ← заміни на свій username
 
-      alert(`Оплатіть ${total} грн на Monobank. Після оплати надішліть скріншот у Telegram.`);
-
-      // Відкриває оплату в новій вкладці
-      window.open(bankLink, "_blank");
+      alert(`Оплатіть ${total} грн через PayPal. Потім надішліть скрін у Telegram.`);
+      window.open(paypalLink, "_blank");
     }
   </script>
 </body>
