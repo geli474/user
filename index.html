@@ -16,6 +16,8 @@
       padding: 10px;
       font-size: 16px;
       margin: 10px;
+      width: 300px;
+      max-width: 90%;
     }
     button {
       background-color: #00c853;
@@ -46,6 +48,9 @@
       <option value="tiktok">TikTok</option>
     </select><br>
 
+    <label>Вставте посилання на канал:</label><br>
+    <input type="text" id="channelLink" placeholder="https://t.me/..." /><br>
+
     <div id="sum">Сума: 0 грн</div>
 
     <button onclick="payMonobank()">Оплатити через Monobank</button>
@@ -67,30 +72,42 @@
 
     function payMonobank() {
       const count = parseInt(document.getElementById("count").value);
+      const link = document.getElementById("channelLink").value;
+
       if (isNaN(count) || count < 100) {
         alert("Мінімальне замовлення — 100 підписників");
         return;
       }
+      if (!link) {
+        alert("Введіть посилання на канал!");
+        return;
+      }
 
       const total = count * pricePerSubscriber;
-      const monoLink = "https://send.monobank.ua/jar/9iLQmykm1J"; // ← твоя банка
+      const monoLink = "https://send.monobank.ua/jar/9iLQmykm1J";
 
-      alert(`Оплатіть ${total} грн через Monobank. Потім надішліть скрін у Telegram.`);
+      alert(`Оплатіть ${total} грн через Monobank. Потім надішліть скрін та посилання в Telegram.`);
       window.open(monoLink, "_blank");
     }
 
     function payWithPayPal() {
       const count = parseInt(document.getElementById("count").value);
+      const link = document.getElementById("channelLink").value;
+
       if (isNaN(count) || count < 100) {
-        alert("Мінімальне замовлення — 100 підписників");
+        alert("Мінімум 100 підписників.");
+        return;
+      }
+      if (!link) {
+        alert("Введіть посилання на канал!");
         return;
       }
 
       const total = count * pricePerSubscriber;
+      const paypalUsername = "User11f2"; // ← твій PayPal.me username
+      const paypalLink = `https://www.paypal.me/${paypalUsername}/${total}`;
 
-      const paypalLink = `https://www.paypal.me/YOUR_PAYPAL_USERNAME/${total}`; // ← заміни на свій username
-
-      alert(`Оплатіть ${total} грн через PayPal. Потім надішліть скрін у Telegram.`);
+      alert(`Оплатіть ${total} грн через PayPal. Потім надішліть скрін та посилання в Telegram.`);
       window.open(paypalLink, "_blank");
     }
   </script>
