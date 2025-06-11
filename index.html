@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Продаж підписників</title>
   <style>
     body {
@@ -12,12 +12,20 @@
       text-align: center;
       padding: 30px;
     }
-    input, select, button {
+    .card {
+      background: #333;
+      padding: 20px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-top: 20px;
+      max-width: 400px;
+      width: 100%;
+    }
+    input, select, button, #paypal-button-container {
+      width: 100%;
       padding: 10px;
       font-size: 16px;
-      margin: 10px;
-      width: 300px;
-      max-width: 90%;
+      margin: 10px 0;
     }
     button {
       background-color: #00c853;
@@ -26,90 +34,142 @@
       border-radius: 5px;
       cursor: pointer;
     }
-    .card {
-      background: #333;
-      padding: 20px;
-      border-radius: 10px;
-      display: inline-block;
-      margin-top: 20px;
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+    #payment-methods {
+      display: none;
+    }
+    #monobank-instruction {
+      display: none;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
   <h1>Продаж підписників</h1>
   <div class="card">
-    <label>Скільки підписників хочете купити:</label><br>
-    <input type="number" id="count" min="100" placeholder="від 100"><br>
+    <label for="count">Скільки підписників (2 грн/шт, 100–500):</label>
+    <input type="number" id="count" min="100" max="500" value="100" />
 
-    <label>Платформа:</label><br>
+    <label for="platform">Платформа:</label>
     <select id="platform">
-      <option value="telegram">Telegram</option>
-      <option value="youtube">YouTube</option>
-      <option value="tiktok">TikTok</option>
-    </select><br>
+      <option value="Telegram">Telegram</option>
+      <option value="YouTube">YouTube</option>
+      <option value="TikTok">TikTok</option>
+    </select>
 
-    <label>Вставте посилання на канал:</label><br>
-    <input type="text" id="channelLink" placeholder="https://t.me/..." /><br>
+    <label for="channelLink">Посилання на канал:</label>
+    <input type="url" id="channelLink" placeholder="https://..." />
 
-    <div id="sum">Сума: 0 грн</div>
+    <div id="sum">Сума: 200 грн</div>
 
-    <button onclick="payMonobank()">Оплатити через Monobank</button>
-    <button onclick="payWithPayPal()">Оплатити через PayPal</button>
+    <button id="btnBuy">Купити</button>
+
+    <div id="payment-methods">
+      <h3>Оберіть спосіб оплати:</h3>
+      <button id="btnPayPalCode">Оплата через PayPal</button>
+      <button id="btnMonobank">Оплата через Monobank</button>
+    </div>
+
+    <div id="paypal-container">
+      <div id="paypal-button-container"></div>
+    </div>
+
+    <div id="monobank-instruction">
+      <p>Оплатіть на карту Monobank:</p>
+      <p><strong>4441 1111 2059 0637</strong></p>
+      <p>Або за посиланням Monobank Send:</p>
+      <a href="https://send.monobank.ua/jar/9iLQmykm1J" target="_blank">send.monobank.ua/jar/9iLQmykm1J</a>
+    </div>
+
+    <p style="margin-top:20px;">💬 Після оплати надішліть скріншот і посилання у Telegram: <strong>@User11f2</strong></p>
   </div>
 
-  <p style="margin-top:30px;">💬 Після оплати надішліть скріншот у Telegram: <b>@User11f2</b></p>
+  <!-- PayPal SDK -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AYCOt9GU4T5Pf--Q2a3TY-xW_ejzvz7BR81tGZL3Ihm2cwdEm_HHBbhVv6iMmpyvRPavwVb00rMf1Eb4&currency=USD"></script>
 
   <script>
-    const pricePerSubscriber = 2;
+    const BOT_TOKEN = '7632854406:AAFTqHaDIVuIa3CVBSfPdGdQMuBWUx1ZDTE';
+    const CHAT_ID = '7454494121';
+    const pricePerSub = 2;
+    let orderId;
+    let paypalRendered = false;
 
-    document.getElementById("count").addEventListener("input", updateSum);
+    const countInput = document.getElementById('count');
+    const platformSelect = document.getElementById('platform');
+    const channelInput = document.getElementById('channelLink');
+    const sumDiv = document.getElementById('sum');
+    const btnBuy = document.getElementById('btnBuy');
+    const paymentMethods = document.getElementById('payment-methods');
+    const btnPayPalCode = document.getElementById('btnPayPalCode');
+    const btnMonobank = document.getElementById('btnMonobank');
+    const paypalContainer = document.getElementById('paypal-container');
+    const monobankInstruction = document.getElementById('monobank-instruction');
 
     function updateSum() {
-      const count = parseInt(document.getElementById("count").value);
-      const sum = isNaN(count) ? 0 : count * pricePerSubscriber;
-      document.getElementById("sum").innerText = `Сума: ${sum} грн`;
+      const count = parseInt(countInput.value);
+      const valid = !isNaN(count);
+      const clamped = Math.min(Math.max(count, 100), 500);
+      if (valid && (count < 100 || count > 500)) countInput.value = clamped;
+      const total = clamped * pricePerSub;
+      sumDiv.innerText = `Сума: ${total} грн`;
     }
 
-    function payMonobank() {
-      const count = parseInt(document.getElementById("count").value);
-      const link = document.getElementById("channelLink").value;
-
-      if (isNaN(count) || count < 100) {
-        alert("Мінімальне замовлення — 100 підписників");
-        return;
-      }
-      if (!link) {
-        alert("Введіть посилання на канал!");
-        return;
-      }
-
-      const total = count * pricePerSubscriber;
-      const monoLink = "https://send.monobank.ua/jar/9iLQmykm1J";
-
-      alert(`Оплатіть ${total} грн через Monobank. Потім надішліть скрін та посилання в Telegram.`);
-      window.open(monoLink, "_blank");
+    function sendTelegram(message) {
+      fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: CHAT_ID, text: message })
+      });
     }
 
-    function payWithPayPal() {
-      const count = parseInt(document.getElementById("count").value);
-      const link = document.getElementById("channelLink").value;
+    countInput.addEventListener('input', updateSum);
+    updateSum();
 
-      if (isNaN(count) || count < 100) {
-        alert("Мінімум 100 підписників.");
-        return;
+    btnBuy.addEventListener('click', () => {
+      const count = parseInt(countInput.value);
+      const link = channelInput.value.trim();
+      const platform = platformSelect.value;
+      if (isNaN(count) || count < 100 || count > 500) {
+        alert('Мінімум 100 і максимум 500 підписників'); return;
       }
-      if (!link) {
-        alert("Введіть посилання на канал!");
-        return;
+      if (!link) { alert('Введіть посилання на канал!'); return; }
+      orderId = 'Order' + Date.now();
+      const message = `🆕 Замовлення ${orderId}\nПідписники: ${count}\nПлатформа: ${platform}\nКанал: ${link}`;
+      sendTelegram(message);
+      paymentMethods.style.display = 'block';
+      btnBuy.disabled = true;
+    });
+
+    btnMonobank.addEventListener('click', () => {
+      paypalContainer.style.display = 'none';
+      monobankInstruction.style.display = 'block';
+      paymentMethods.style.display = 'none';
+    });
+
+    btnPayPalCode.addEventListener('click', () => {
+      paymentMethods.style.display = 'none';
+      monobankInstruction.style.display = 'none';
+      paypalContainer.style.display = 'block';
+      if (!paypalRendered) {
+        paypal.Buttons({
+          createOrder: (data, actions) => {
+            const count = parseInt(countInput.value);
+            const totalUSD = (count * pricePerSub * 0.03).toFixed(2);
+            return actions.order.create({
+              purchase_units: [{ amount: { value: totalUSD }}]
+            });
+          },
+          onApprove: (data, actions) => actions.order.capture().then(details => {
+            alert('Оплата через PayPal успішна');
+            sendTelegram(`✅ Оплат через PayPal успішний: ${orderId}`);
+          })
+        }).render('#paypal-button-container');
+        paypalRendered = true;
       }
-
-      const total = count * pricePerSubscriber;
-      const paypalUsername = "User11f2"; // ← твій PayPal.me username
-      const paypalLink = `https://www.paypal.me/${paypalUsername}/${total}`;
-
-      alert(`Оплатіть ${total} грн через PayPal. Потім надішліть скрін та посилання в Telegram.`);
-      window.open(paypalLink, "_blank");
-    }
+    });
   </script>
 </body>
 </html>
