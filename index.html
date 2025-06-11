@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Продаж підписників</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #000000, #222222);
+      color: white;
+      text-align: center;
+      padding: 30px;
+    }
+    input, select, button {
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px;
+    }
+    button {
+      background-color: #00c853;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .card {
+      background: #333;
+      padding: 20px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Продаж підписників</h1>
+  <div class="card">
+    <label>Скільки підписників хочете купити:</label><br>
+    <input type="number" id="count" min="100" placeholder="від 100"><br>
+
+    <label>Платформа:</label><br>
+    <select id="platform">
+      <option value="telegram">Telegram</option>
+      <option value="youtube">YouTube</option>
+      <option value="tiktok">TikTok</option>
+    </select><br>
+
+    <div id="sum">Сума: 0 грн</div>
+
+    <button onclick="buy()">Купить</button>
+  </div>
+
+  <p style="margin-top:30px;">💳 Після оплати, надішліть скріншот у Telegram: <b>@tviy_nik</b></p>
+
+  <script>
+    const pricePerSubscriber = 2;
+
+    document.getElementById("count").addEventListener("input", updateSum);
+
+    function updateSum() {
+      const count = parseInt(document.getElementById("count").value);
+      const sum = isNaN(count) ? 0 : count * pricePerSubscriber;
+      document.getElementById("sum").innerText = `Сума: ${sum} грн`;
+    }
+
+    function buy() {
+      const count = parseInt(document.getElementById("count").value);
+      if (isNaN(count) || count < 100) {
+        alert("Мінімальне замовлення — 100 підписників");
+        return;
+      }
+
+      const total = count * pricePerSubscriber;
+
+      // Посилання на банку Monobank:
+      const bankLink = "https://send.monobank.ua/jar/9iLQmykm1J";
+
+      alert(`Оплатіть ${total} грн на Monobank. Після оплати надішліть скріншот у Telegram.`);
+
+      // Відкриває оплату в новій вкладці
+      window.open(bankLink, "_blank");
+    }
+  </script>
+</body>
+</html>
